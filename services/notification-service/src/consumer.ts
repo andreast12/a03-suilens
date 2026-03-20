@@ -1,6 +1,7 @@
 import amqplib from "amqplib";
 import { db } from "./db";
 import { notifications } from "./db/schema";
+import { broadcast } from "./websocket";
 
 const RABBITMQ_URL =
   process.env.RABBITMQ_URL || "amqp://guest:guest@localhost:5672";
@@ -42,6 +43,12 @@ export async function startConsumer() {
             });
 
             console.log(`Notification recorded for order ${orderId}`);
+
+            broadcast({
+              event: "order.placed",
+              timestamp: new Date().toISOString(),
+              data: { orderId, customerName, customerEmail, lensName },
+            });
           }
 
           channel.ack(msg);

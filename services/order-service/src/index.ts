@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { cors } from "@elysiajs/cors";
+import { swagger } from "@elysiajs/swagger";
 import { db } from "./db";
 import { orders } from "./db/schema";
 import { eq } from "drizzle-orm";
@@ -17,6 +18,18 @@ interface CatalogLens {
 
 const app = new Elysia()
   .use(cors())
+  .use(
+    swagger({
+      path: "/docs",
+      documentation: {
+        info: {
+          title: "Order Service API",
+          version: "1.0.0",
+          description: "API untuk manajemen order penyewaan lensa",
+        },
+      },
+    }),
+  )
   .post(
     "/api/orders",
     async ({ body }) => {
@@ -83,22 +96,48 @@ const app = new Elysia()
         startDate: t.String(),
         endDate: t.String(),
       }),
+      detail: {
+        summary: "Create new order",
+        description: "Membuat order penyewaan lensa baru",
+        tags: ["Orders"],
+      },
     },
   )
-  .get("/api/orders", async () => db.select().from(orders))
-  .get("/api/orders/:id", async ({ params }) => {
-    const results = await db
-      .select()
-      .from(orders)
-      .where(eq(orders.id, params.id));
-    if (!results[0]) {
-      return new Response(JSON.stringify({ error: "Order not found" }), {
-        status: 404,
-      });
-    }
-    return results[0];
+  .get("/api/orders", async () => db.select().from(orders), {
+    detail: {
+      summary: "Get all orders",
+      description: "Mengambil seluruh data order",
+      tags: ["Orders"],
+    },
   })
-  .get("/health", () => ({ status: "ok", service: "order-service" }))
+  .get(
+    "/api/orders/:id",
+    async ({ params }) => {
+      const results = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.id, params.id));
+      if (!results[0]) {
+        return new Response(JSON.stringify({ error: "Order not found" }), {
+          status: 404,
+        });
+      }
+      return results[0];
+    },
+    {
+      detail: {
+        summary: "Get order by ID",
+        description: "Mengambil data satu order berdasarkan ID",
+        tags: ["Orders"],
+      },
+    },
+  )
+  .get("/health", () => ({ status: "ok", service: "order-service" }), {
+    detail: {
+      summary: "Health check",
+      tags: ["Health"],
+    },
+  })
   .listen(3002);
 
 console.log(`Order Service running on port ${app.server?.port}`);

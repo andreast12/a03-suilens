@@ -46,9 +46,49 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 
 const notifications = ref([]);
+let ws = null;
+
+const WS_URL = import.meta.env.VITE_NOTIFICATION_WS || "ws://localhost:3003/ws";
+
+function connectWebSocket() {
+  ws = new WebSocket(WS_URL);
+
+  ws.onopen = () => {
+    console.log("WebSocket connected to notification service");
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.event === "order.placed") {
+        notifications.value.unshift(data); // tampilkan yang terbaru di atas
+      }
+    } catch (e) {
+      console.error("Failed to parse WebSocket message", e);
+    }
+  };
+
+  ws.onclose = () => {
+    console.log("WebSocket disconnected, reconnecting in 3s...");
+    setTimeout(connectWebSocket, 3000); // auto-reconnect
+  };
+
+  ws.onerror = (err) => {
+    console.error("WebSocket error:", err);
+    ws.close();
+  };
+}
+
+onMounted(() => {
+  connectWebSocket();
+});
+
+onUnmounted(() => {
+  if (ws) ws.close();
+});
 
 function formatTime(timestamp) {
   const date = new Date(timestamp);

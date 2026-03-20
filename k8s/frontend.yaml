@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: suilens-2306259963
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: andreast12/suilens-frontend:latest
+        ports:
+        - containerPort: 5173
+        env:
+        - name: VITE_CATALOG_API
+          value: http://192.168.56.200:3001
+        - name: VITE_ORDER_API
+          value: http://192.168.56.201:3002
+        - name: VITE_NOTIFICATION_WS
+          value: ws://192.168.56.202:3003/ws
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: suilens-2306259963
+spec:
+  type: LoadBalancer
+  selector:
+    app: frontend
+  ports:
+  - port: 5173
+    targetPort: 5173
