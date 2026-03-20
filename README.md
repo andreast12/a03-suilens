@@ -1,6 +1,6 @@
 # A03 - API and Kubernetes Deployment
 
-**Nama:** Andreas Timothy
+**Nama:** Andreas Timothy  
 **NPM:** 2306259963
 
 ---
